@@ -85,7 +85,8 @@ public class MuleGraphService {
             for (Document edge : chain) {
                 String from = edge.getString("fromAccountId");
                 String to = edge.getString("toAccountId");
-                Integer hopCount = edge.getInteger("hopCount", MAX_DEPTH);
+                Number hopNumber = (Number) edge.get("hopCount");
+                int hopCount = hopNumber != null ? hopNumber.intValue() : MAX_DEPTH;
 
                 if (knownFraudAccounts.contains(from) || knownFraudAccounts.contains(to)) {
                     minHop = Math.min(minHop, hopCount + 1);

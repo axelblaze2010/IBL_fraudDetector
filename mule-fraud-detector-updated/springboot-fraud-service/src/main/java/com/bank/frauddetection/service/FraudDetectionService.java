@@ -91,7 +91,7 @@ public class FraudDetectionService {
         fraudCase.setResolvedAt(LocalDateTime.now());
 
         FraudCase saved = fraudCaseRepository.save(fraudCase);
-        riskCacheService.invalidate(saved.getAccountId());
+        /*riskCacheService.invalidate(saved.getAccountId());*/
         return saved;
     }
 
@@ -105,7 +105,7 @@ public class FraudDetectionService {
         fraudCase.setResolvedAt(LocalDateTime.now());
 
         FraudCase saved = fraudCaseRepository.save(fraudCase);
-        riskCacheService.invalidate(saved.getAccountId());
+        /*riskCacheService.invalidate(saved.getAccountId());*/
         return saved;
     }
 

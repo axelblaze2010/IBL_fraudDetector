@@ -17,8 +17,8 @@ public class TransactionGraphUpdateListener {
     @Async
     @EventListener
     public void onTransactionGraphUpdate(TransactionGraphUpdateEvent event) {
-        riskCacheService.invalidate(event.getFromAccountId());
-        riskCacheService.invalidate(event.getToAccountId());
+     /*   riskCacheService.invalidate(event.getFromAccountId());
+        riskCacheService.invalidate(event.getToAccountId());*/
         log.info("Invalidated cached risk scores after graph update. transactionId={}, from={}, to={}",
                 event.getTransactionId(), event.getFromAccountId(), event.getToAccountId());
     }
