@@ -1,0 +1,502 @@
+{
+  "info": {
+    "name": "Mule Fraud Detector API",
+    "description": "Complete API collection for Mule Fraud Detector - Spring Boot Fraud Detection Service + Python ML Risk Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Spring Boot Fraud Service",
+      "description": "Fraud detection APIs - Base URL: http://localhost:8080/api/fraud",
+      "item": [
+        {
+          "name": "1. Check Mule Risk - Analyze Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"ACC1001\",\n  \"toAccountId\": \"ACC2002\",\n  \"amount\": 50000,\n  \"transactionType\": \"UPI\",\n  \"deviceId\": \"device-abc-123\",\n  \"sessionId\": \"session-001\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/fraud/check-mule",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "fraud", "check-mule"]
+            },
+            "description": "Analyzes a transaction for mule fraud risk:\n- Saves transaction to MongoDB\n- Updates account/account_links graph\n- Computes rule-based fraud scores (velocity, graph-depth, behavior, device)\n- Calls ML service for anomaly scoring\n- Combines both scores (60% rule + 40% ML)\n- Creates fraud case if CRITICAL"
+          },
+          "response": [
+            {
+              "name": "Successful Response (HIGH Risk)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fromAccountId\": \"ACC1001\",\n  \"toAccountId\": \"ACC2002\",\n  \"amount\": 50000,\n  \"transactionType\": \"UPI\",\n  \"deviceId\": \"device-abc-123\",\n  \"sessionId\": \"session-001\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/check-mule",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "check-mule"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accountId\": \"ACC2002\",\n  \"riskScore\": 75,\n  \"riskLevel\": \"HIGH\",\n  \"action\": \"STEP_UP_AUTH\",\n  \"ruleScore\": 55,\n  \"mlScore\": 85,\n  \"referenceId\": null,\n  \"reasons\": [\n    \"High transaction velocity: more than 10 incoming transactions in last 1 hour\",\n    \"Fan-out pattern detected: account sent to 5+ accounts within 10 minutes\",\n    \"ML signal: account behaves like pass-through money pipe\"\n  ],\n  \"recommendation\": \"Require biometric or OTP step-up\"\n}"
+            },
+            {
+              "name": "Critical Risk - Fraud Case Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fromAccountId\": \"ACC1001\",\n  \"toAccountId\": \"ACC2002\",\n  \"amount\": 50000,\n  \"transactionType\": \"UPI\",\n  \"deviceId\": \"device-abc-123\",\n  \"sessionId\": \"session-001\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/check-mule",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "check-mule"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accountId\": \"ACC2002\",\n  \"riskScore\": 92,\n  \"riskLevel\": \"CRITICAL\",\n  \"action\": \"BLOCK\",\n  \"ruleScore\": 75,\n  \"mlScore\": 95,\n  \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n  \"reasons\": [\n    \"Circular money flow detected within 5 hops\",\n    \"ML signal: account behaves like pass-through money pipe\",\n    \"ML signal: device pattern resembles mule cluster\"\n  ],\n  \"recommendation\": \"Block transaction and create fraud case\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Get Latest Risk Score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/fraud/risk-score/ACC2002",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "fraud", "risk-score", "ACC2002"]
+            },
+            "description": "Retrieves the latest fraud risk score and detailed breakdown for a specific account"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/risk-score/ACC2002",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "risk-score", "ACC2002"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"635f7c5c5c5c5c5c5c5c5c5c\",\n  \"accountId\": \"ACC2002\",\n  \"riskScore\": 75,\n  \"riskLevel\": \"HIGH\",\n  \"ruleScore\": 55,\n  \"mlScore\": 85,\n  \"velocityScore\": 25,\n  \"graphDepthScore\": 15,\n  \"behaviorScore\": 10,\n  \"deviceScore\": 5,\n  \"reasons\": [\n    \"High transaction velocity: more than 10 incoming transactions in last 1 hour\",\n    \"Fan-out pattern detected: account sent to 5+ accounts within 10 minutes\"\n  ],\n  \"computedAt\": \"2026-05-07T14:30:45\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. Get Fraud Cases by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/fraud/cases?status=OPEN",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "fraud", "cases"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "OPEN",
+                  "description": "Status filter: OPEN, RESOLVED, FALSE_POSITIVE"
+                }
+              ]
+            },
+            "description": "Lists fraud cases filtered by status"
+          },
+          "response": [
+            {
+              "name": "Get OPEN Cases",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/cases?status=OPEN",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "cases"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "OPEN"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"635f7c5c5c5c5c5c5c5c5c5d\",\n    \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n    \"accountId\": \"ACC2002\",\n    \"riskScore\": 85,\n    \"action\": \"BLOCK\",\n    \"reasons\": [\"High transaction velocity\", \"Circular money flow detected\"],\n    \"status\": \"OPEN\",\n    \"resolvedBy\": null,\n    \"resolutionNote\": null,\n    \"falsePositiveReason\": null,\n    \"reportedBy\": null,\n    \"createdAt\": \"2026-05-07T14:30:45\",\n    \"resolvedAt\": null,\n    \"falsePositiveReportedAt\": null\n  }\n]"
+            },
+            {
+              "name": "Get RESOLVED Cases",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/cases?status=RESOLVED",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "cases"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "RESOLVED"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"635f7c5c5c5c5c5c5c5c5c5e\",\n    \"referenceId\": \"FRAUD-20260506-IJKLMNOP\",\n    \"accountId\": \"ACC3003\",\n    \"riskScore\": 92,\n    \"action\": \"BLOCK\",\n    \"reasons\": [\"Pass-through ratio is above 90%\"],\n    \"status\": \"RESOLVED\",\n    \"resolvedBy\": \"ops-user-1\",\n    \"resolutionNote\": \"Confirmed fraud pattern. Account blocked.\",\n    \"falsePositiveReason\": null,\n    \"reportedBy\": null,\n    \"createdAt\": \"2026-05-06T10:15:30\",\n    \"resolvedAt\": \"2026-05-06T15:45:20\",\n    \"falsePositiveReportedAt\": null\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "4. Report False Positive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n  \"reportedBy\": \"user-123\",\n  \"reason\": \"I know this recipient and this was legitimate\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/fraud/report-false-positive",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "fraud", "report-false-positive"]
+            },
+            "description": "Reports a fraud case as a false positive (legitimate transaction). Updates case status and invalidates Redis cache."
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n  \"reportedBy\": \"user-123\",\n  \"reason\": \"I know this recipient and this was legitimate\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/report-false-positive",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "report-false-positive"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"635f7c5c5c5c5c5c5c5c5c5c\",\n  \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n  \"accountId\": \"ACC2002\",\n  \"riskScore\": 75,\n  \"action\": \"BLOCK\",\n  \"reasons\": [\"High transaction velocity\"],\n  \"status\": \"FALSE_POSITIVE\",\n  \"resolvedBy\": null,\n  \"resolutionNote\": null,\n  \"falsePositiveReason\": \"I know this recipient and this was legitimate\",\n  \"reportedBy\": \"user-123\",\n  \"createdAt\": \"2026-05-07T14:30:45\",\n  \"resolvedAt\": null,\n  \"falsePositiveReportedAt\": \"2026-05-07T14:35:10\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "5. Resolve Fraud Case",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolvedBy\": \"ops-user-1\",\n  \"resolutionNote\": \"Reviewed transaction chain and confirmed fraud. Account blocked.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/fraud/cases/FRAUD-20260507-ABCDEFGH/resolve",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "fraud", "cases", "FRAUD-20260507-ABCDEFGH", "resolve"]
+            },
+            "description": "Marks a fraud case as resolved by operations team. Updates case status, resolver info, and invalidates Redis cache."
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resolvedBy\": \"ops-user-1\",\n  \"resolutionNote\": \"Reviewed transaction chain and confirmed fraud. Account blocked.\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/fraud/cases/FRAUD-20260507-ABCDEFGH/resolve",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "fraud", "cases", "FRAUD-20260507-ABCDEFGH", "resolve"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"635f7c5c5c5c5c5c5c5c5c5c\",\n  \"referenceId\": \"FRAUD-20260507-ABCDEFGH\",\n  \"accountId\": \"ACC2002\",\n  \"riskScore\": 75,\n  \"action\": \"BLOCK\",\n  \"reasons\": [\"High transaction velocity\"],\n  \"status\": \"RESOLVED\",\n  \"resolvedBy\": \"ops-user-1\",\n  \"resolutionNote\": \"Reviewed transaction chain and confirmed fraud. Account blocked.\",\n  \"falsePositiveReason\": null,\n  \"reportedBy\": null,\n  \"createdAt\": \"2026-05-07T14:30:45\",\n  \"resolvedAt\": \"2026-05-07T15:45:20\",\n  \"falsePositiveReportedAt\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ML Risk Service",
+      "description": "ML Risk Scoring Service - Base URL: http://localhost:8000",
+      "item": [
+        {
+          "name": "1. Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["health"]
+            },
+            "description": "Checks if the ML service is running and healthy"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8000/health",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8000",
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Predict Risk - ML Scoring",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txnCountLast1Hour\": 15,\n  \"txnCountLast24Hours\": 45,\n  \"amountReceivedLast24Hours\": 500000.50,\n  \"amountSentLast24Hours\": 480000.25,\n  \"passThroughRatio\": 0.95,\n  \"avgForwardingTime\": 2.5,\n  \"uniqueSendersCount\": 8,\n  \"uniqueReceiversCount\": 12,\n  \"linkedDeviceCount\": 5,\n  \"accountAgeDays\": 30,\n  \"inactiveDaysBeforeTxn\": 2,\n  \"hopDistanceFromFraudNode\": 2,\n  \"circularFlowDetected\": true,\n  \"fanOutCount\": 7,\n  \"hasLegitimateCredits\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/ml/predict-risk",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["ml", "predict-risk"]
+            },
+            "description": "Analyzes account features and returns ML-based fraud probability and anomaly score. This endpoint is called internally by the Spring Boot service."
+          },
+          "response": [
+            {
+              "name": "High Risk - Multiple Fraud Signals",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"txnCountLast1Hour\": 15,\n  \"txnCountLast24Hours\": 45,\n  \"amountReceivedLast24Hours\": 500000.50,\n  \"amountSentLast24Hours\": 480000.25,\n  \"passThroughRatio\": 0.95,\n  \"avgForwardingTime\": 2.5,\n  \"uniqueSendersCount\": 8,\n  \"uniqueReceiversCount\": 12,\n  \"linkedDeviceCount\": 5,\n  \"accountAgeDays\": 30,\n  \"inactiveDaysBeforeTxn\": 2,\n  \"hopDistanceFromFraudNode\": 2,\n  \"circularFlowDetected\": true,\n  \"fanOutCount\": 7,\n  \"hasLegitimateCredits\": false\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8000/ml/predict-risk",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8000",
+                  "path": ["ml", "predict-risk"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mlScore\": 95,\n  \"fraudProbability\": 0.95,\n  \"mlReasons\": [\n    \"ML signal: unusually high transaction count in last 1 hour\",\n    \"ML signal: account behaves like pass-through money pipe\",\n    \"ML signal: device pattern resembles mule cluster\",\n    \"ML signal: circular transaction flow detected\",\n    \"ML signal: fan-out transaction behaviour detected\",\n    \"ML signal: no legitimate credit history found\"\n  ]\n}"
+            },
+            {
+              "name": "Low Risk - Legitimate Account",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"txnCountLast1Hour\": 2,\n  \"txnCountLast24Hours\": 5,\n  \"amountReceivedLast24Hours\": 50000.00,\n  \"amountSentLast24Hours\": 5000.00,\n  \"passThroughRatio\": 0.10,\n  \"avgForwardingTime\": 120.0,\n  \"uniqueSendersCount\": 2,\n  \"uniqueReceiversCount\": 1,\n  \"linkedDeviceCount\": 1,\n  \"accountAgeDays\": 365,\n  \"inactiveDaysBeforeTxn\": 0,\n  \"hopDistanceFromFraudNode\": 10,\n  \"circularFlowDetected\": false,\n  \"fanOutCount\": 0,\n  \"hasLegitimateCredits\": true\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8000/ml/predict-risk",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8000",
+                  "path": ["ml", "predict-risk"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"mlScore\": 0,\n  \"fraudProbability\": 0.0,\n  \"mlReasons\": []\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "mlBaseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}
+
