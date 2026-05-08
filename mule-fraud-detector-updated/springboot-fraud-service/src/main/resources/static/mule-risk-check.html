@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mule Account Risk Detector</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: auto;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            color: #1f2937;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        p {
+            color: #4b5563;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .quick-buttons button {
+            margin-top: 0;
+            background: #374151;
+            font-size: 14px;
+        }
+
+        .quick-buttons button:hover {
+            background: #111827;
+        }
+
+        .result {
+            display: none;
+        }
+
+        .risk-score {
+            font-size: 44px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #111827;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-weight: bold;
+            color: white;
+            margin-top: 8px;
+        }
+
+        .LOW {
+            background: #16a34a;
+        }
+
+        .MEDIUM {
+            background: #f59e0b;
+        }
+
+        .HIGH {
+            background: #ea580c;
+        }
+
+        .CRITICAL {
+            background: #dc2626;
+        }
+
+        .action-box {
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .allow {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .warn {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .stepup {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
+        .block {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        ul {
+            margin-top: 12px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .error {
+            display: none;
+            padding: 14px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .loader {
+            display: none;
+            margin-top: 16px;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .raw-json {
+            background: #111827;
+            color: #d1d5db;
+            padding: 14px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+
+        .special-alert {
+            display: none;
+            background: #7f1d1d;
+            color: white;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-weight: bold;
+        }
+
+        .api-url-box {
+            background: #f9fafb;
+            border: 1px dashed #9ca3af;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .summary-box {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .summary-box span {
+            display: block;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-top: 6px;
+            color: #111827;
+            font-size: 18px;
+        }
+
+        .note {
+            background: #eff6ff;
+            border-left: 5px solid #2563eb;
+            padding: 14px;
+            border-radius: 8px;
+            color: #1e3a8a;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 14px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+        <h1>Mule Account Network Detector</h1>
+        <p>
+            This page is served directly from Spring Boot static resources and calls the backend using a relative API URL.
+        </p>
+
+        <div class="api-url-box">
+            API Used:
+            <strong>/api/fraud/check-mule</strong>
+        </div>
+
+        <div class="note">
+            Put this file under <strong>src/main/resources/static/mule-risk-check.html</strong>
+            and open <strong>http://localhost:8080/mule-risk-check.html</strong>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Transaction Risk Check</h2>
+
+        <div class="grid-2">
+            <div>
+                <label>From Account ID</label>
+                <input id="fromAccountId" value="ACC1001">
+            </div>
+
+            <div>
+                <label>To Account ID</label>
+                <input id="toAccountId" value="ACC2001">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <label>Amount</label>
+                <input id="amount" type="number" value="50000">
+            </div>
+
+            <div>
+                <label>Transaction Type</label>
+                <select id="transactionType">
+                    <option value="UPI">UPI</option>
+                    <option value="NEFT">NEFT</option>
+                    <option value="IMPS">IMPS</option>
+                    <option value="RTGS">RTGS</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <label>Device ID</label>
+                <input id="deviceId" value="devFraudHash">
+            </div>
+
+            <div>
+                <label>Session ID</label>
+                <input id="sessionId" value="session-demo-001">
+            </div>
+        </div>
+
+        <button id="checkBtn" onclick="checkMuleRisk()">Check Mule Risk</button>
+
+        <div class="loader" id="loader">Checking mule risk...</div>
+
+        <div class="error" id="errorBox"></div>
+
+        <div class="quick-buttons">
+            <button onclick="loadCriticalCase()">Load Critical Mule Case</button>
+            <button onclick="loadFanOutReturnCase()">Load Fan-out Return Case</button>
+            <button onclick="loadNormalCase()">Load Normal Case</button>
+            <button onclick="resetForm()">Reset</button>
+        </div>
+    </div>
+
+    <div class="card result" id="resultCard">
+        <h2>Risk Result</h2>
+
+        <div class="summary-grid">
+            <div class="summary-box">
+                <span>Account</span>
+                <strong id="resultAccount">-</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Risk Score</span>
+                <strong id="summaryRiskScore">0</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Risk Level</span>
+                <strong id="summaryRiskLevel">LOW</strong>
+            </div>
+
+            <div class="summary-box">
+                <span>Action</span>
+                <strong id="summaryAction">ALLOW</strong>
+            </div>
+        </div>
+
+        <div class="risk-score" id="riskScore">0</div>
+
+        <div>
+            Risk Level:
+            <span class="badge LOW" id="riskLevel">LOW</span>
+        </div>
+
+        <div class="action-box allow" id="actionBox">
+            ✅ Transaction Allowed
+        </div>
+
+        <div class="special-alert" id="fanOutAlert">
+            🚨 Circular fan-out detected: funds split into multiple accounts and returned to origin.
+        </div>
+
+        <h3>Reasons</h3>
+        <ul id="reasonsList"></ul>
+
+        <h3>Recommendation</h3>
+        <p id="recommendation"></p>
+
+        <h3>Reference ID</h3>
+        <p id="referenceId"></p>
+
+        <h3>Raw API Response</h3>
+        <pre class="raw-json" id="rawJson"></pre>
+    </div>
+
+</div>
+
+<script>
+    function getApiUrl() {
+        return "/api/fraud/check-mule";
+    }
+
+    async function checkMuleRisk() {
+        hideError();
+        hideResult();
+
+        const button = document.getElementById("checkBtn");
+        const loader = document.getElementById("loader");
+
+        const request = {
+            fromAccountId: document.getElementById("fromAccountId").value.trim(),
+            toAccountId: document.getElementById("toAccountId").value.trim(),
+            amount: Number(document.getElementById("amount").value),
+            transactionType: document.getElementById("transactionType").value,
+            deviceId: document.getElementById("deviceId").value.trim(),
+            sessionId: document.getElementById("sessionId").value.trim()
+        };
+
+        const validationError = validateRequest(request);
+
+        if (validationError) {
+            showError(validationError);
+            return;
+        }
+
+        try {
+            button.disabled = true;
+            loader.style.display = "block";
+
+            const response = await fetch(getApiUrl(), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(request)
+            });
+
+            const responseText = await response.text();
+
+            let data;
+
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                throw new Error("Invalid JSON response from backend: " + responseText);
+            }
+
+            if (!response.ok) {
+                throw new Error(data.message || data.error || "API failed with status " + response.status);
+            }
+
+            renderResult(data);
+
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            button.disabled = false;
+            loader.style.display = "none";
+        }
+    }
+
+    function validateRequest(request) {
+        if (!request.fromAccountId) {
+            return "From Account ID is required";
+        }
+
+        if (!request.toAccountId) {
+            return "To Account ID is required";
+        }
+
+        if (!request.amount || request.amount <= 0) {
+            return "Amount must be greater than 0";
+        }
+
+        if (!request.transactionType) {
+            return "Transaction Type is required";
+        }
+
+        if (!request.deviceId) {
+            return "Device ID is required";
+        }
+
+        if (!request.sessionId) {
+            return "Session ID is required";
+        }
+
+        return null;
+    }
+
+    function renderResult(data) {
+        const riskLevel = data.riskLevel || "LOW";
+        const action = data.action || "ALLOW";
+        const riskScore = data.riskScore ?? 0;
+        const accountId = data.accountId || data.toAccountId || document.getElementById("toAccountId").value || "-";
+
+        document.getElementById("resultAccount").innerText = accountId;
+        document.getElementById("riskScore").innerText = riskScore;
+
+        document.getElementById("summaryRiskScore").innerText = riskScore;
+        document.getElementById("summaryRiskLevel").innerText = riskLevel;
+        document.getElementById("summaryAction").innerText = action;
+
+        const riskBadge = document.getElementById("riskLevel");
+        riskBadge.innerText = riskLevel;
+        riskBadge.className = "badge " + riskLevel;
+
+        renderAction(action, riskLevel);
+
+        const reasonsList = document.getElementById("reasonsList");
+        reasonsList.innerHTML = "";
+
+        const reasons = data.reasons || [];
+
+        if (reasons.length === 0) {
+            const li = document.createElement("li");
+            li.innerText = "No suspicious reason found";
+            reasonsList.appendChild(li);
+        } else {
+            reasons.forEach(reason => {
+                const li = document.createElement("li");
+                li.innerText = reason;
+                reasonsList.appendChild(li);
+            });
+        }
+
+        document.getElementById("recommendation").innerText =
+            data.recommendation || resolveRecommendation(riskLevel);
+
+        document.getElementById("referenceId").innerText =
+            data.referenceId || "Not generated";
+
+        document.getElementById("rawJson").innerText =
+            JSON.stringify(data, null, 2);
+
+        showFanOutReturnAlert(reasons);
+
+        document.getElementById("resultCard").style.display = "block";
+    }
+
+    function renderAction(action, riskLevel) {
+        const actionBox = document.getElementById("actionBox");
+
+        actionBox.className = "action-box";
+
+        if (action === "ALLOW" || riskLevel === "LOW") {
+            actionBox.classList.add("allow");
+            actionBox.innerText = "✅ Transaction Allowed";
+            return;
+        }
+
+        if (action === "WARN" || riskLevel === "MEDIUM") {
+            actionBox.classList.add("warn");
+            actionBox.innerText = "⚠️ Warning Required Before Proceeding";
+            return;
+        }
+
+        if (action === "STEP_UP_AUTH" || riskLevel === "HIGH") {
+            actionBox.classList.add("stepup");
+            actionBox.innerText = "🔐 Step-up Authentication Required";
+            return;
+        }
+
+        if (action === "BLOCK" || riskLevel === "CRITICAL") {
+            actionBox.classList.add("block");
+            actionBox.innerText = "🚫 Transaction Blocked";
+            return;
+        }
+
+        actionBox.classList.add("warn");
+        actionBox.innerText = "Manual Review Required";
+    }
+
+    function showFanOutReturnAlert(reasons) {
+        const fanOutAlert = document.getElementById("fanOutAlert");
+
+        const detected = reasons.some(reason => {
+            const text = String(reason).toLowerCase();
+
+            return text.includes("circular fan-out")
+                || text.includes("funds split")
+                || text.includes("returned to origin")
+                || text.includes("fan-out return");
+        });
+
+        fanOutAlert.style.display = detected ? "block" : "none";
+    }
+
+    function resolveRecommendation(riskLevel) {
+        switch (riskLevel) {
+            case "LOW":
+                return "Allow transaction.";
+            case "MEDIUM":
+                return "Show warning and ask user to verify recipient.";
+            case "HIGH":
+                return "Require OTP or biometric step-up before proceeding.";
+            case "CRITICAL":
+                return "Block transaction and create fraud case.";
+            default:
+                return "Manual review required.";
+        }
+    }
+
+    function showError(message) {
+        const errorBox = document.getElementById("errorBox");
+        errorBox.innerText = message;
+        errorBox.style.display = "block";
+    }
+
+    function hideError() {
+        document.getElementById("errorBox").style.display = "none";
+    }
+
+    function hideResult() {
+        document.getElementById("resultCard").style.display = "none";
+    }
+
+    function loadCriticalCase() {
+        document.getElementById("fromAccountId").value = "ACC1001";
+        document.getElementById("toAccountId").value = "ACC2001";
+        document.getElementById("amount").value = "50000";
+        document.getElementById("transactionType").value = "UPI";
+        document.getElementById("deviceId").value = "devFraudHash";
+        document.getElementById("sessionId").value = "session-critical-001";
+
+        hideError();
+        hideResult();
+    }
+
+    function loadFanOutReturnCase() {
+        /*
+            Use this after your DB contains this account_links pattern:
+
+            ACC1 -> ACC2
+            ACC2 -> ACC3
+            ACC2 -> ACC4
+            ACC2 -> ACC5
+            ACC3 -> ACC1
+            ACC4 -> ACC1
+            ACC5 -> ACC1
+
+            Backend should add reason:
+            "Circular fan-out detected: funds split into multiple accounts and returned to origin"
+        */
+
+        document.getElementById("fromAccountId").value = "ACC1";
+        document.getElementById("toAccountId").value = "ACC2";
+        document.getElementById("amount").value = "75000";
+        document.getElementById("transactionType").value = "UPI";
+        document.getElementById("deviceId").value = "fanout-return-device";
+        document.getElementById("sessionId").value = "session-fanout-return-001";
+
+        hideError();
+        hideResult();
+    }
+
+    function loadNormalCase() {
+        document.getElementById("fromAccountId").value = "ACC1001";
+        document.getElementById("toAccountId").value = "ACC1002";
+        document.getElementById("amount").value = "1000";
+        document.getElementById("transactionType").value = "UPI";
+        document.getElementById("deviceId").value = "normal-device-001";
+        document.getElementById("sessionId").value = "session-normal-001";
+
+        hideError();
+        hideResult();
+    }
+
+    function resetForm() {
+        document.getElementById("fromAccountId").value = "";
+        document.getElementById("toAccountId").value = "";
+        document.getElementById("amount").value = "";
+        document.getElementById("transactionType").value = "UPI";
+        document.getElementById("deviceId").value = "";
+        document.getElementById("sessionId").value = "";
+
+        hideError();
+        hideResult();
+    }
+</script>
+
+</body>
+</html>
