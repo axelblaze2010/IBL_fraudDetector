@@ -32,17 +32,31 @@ public class RiskScoringService {
         List<String> reasons = new ArrayList<>();
 
         int velocityScore = calculateVelocityScore(accountId, reasons);
-        int graphDepthScore = calculateGraphDepthScore(accountId, reasons);
-        int behaviorScore = calculateBehaviorScore(accountId, account, reasons);
+        int graphDepthScore = calculateGraphDepthScore(accountId, reasons); //hop distance from known fraud nodes
+        int behaviorScore = calculateBehaviorScore(accountId, account, reasons); // pass-through ratio, forwarding time, legitimate credits
         int deviceScore = calculateDeviceScore(account, reasons);
 
         boolean circularFlowDetected = muleGraphService.hasCircularFlow(accountId);
+        boolean fanOutWithCircularDetected = muleGraphService.hasFanOutWithCircularFlow(accountId);
+        boolean multiLevelFanOutDetected = muleGraphService.hasMultiLevelFanOut(accountId);
         int fanOutCount = muleGraphService.getFanOutCount(accountId);
         int hopDistance = muleGraphService.distanceFromKnownFraudNode(accountId);
 
         if (circularFlowDetected) {
             graphDepthScore = Math.max(graphDepthScore, 25);
             reasons.add("Circular money flow detected within 5 hops");
+        }
+
+        // CRITICAL: Fan-out with return (money laundering pattern)
+        if (fanOutWithCircularDetected) {
+            graphDepthScore = Math.max(graphDepthScore, 30);  // Extra penalty for sophisticated pattern
+            reasons.add("CRITICAL: Fan-out with circular flow detected - funds split across multiple accounts and returned");
+        }
+
+        // HIGH RISK: Multi-level fan-out through intermediaries
+        if (multiLevelFanOutDetected) {
+            graphDepthScore = Math.max(graphDepthScore, 28);
+            reasons.add("Multi-level fan-out detected: funds distributed through intermediary accounts");
         }
 
         if (fanOutCount >= 5) {
